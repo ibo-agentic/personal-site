@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ibo — Building AI Products from Bangladesh</title>
+  <meta name="description" content="Bashanta Bikash Chakma — final-year CSE student building AI products from Bangladesh. LLMs, agents, RAG." />
+  <meta property="og:title" content="Ibo — Building AI Products from Bangladesh" />
+  <meta property="og:description" content="Building AI products. LLMs, agents, RAG." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://ibohanma.com" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Cinzel:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #050507;
+      --bg-deeper: #030305;
+      --bg-card: rgba(20, 20, 26, 0.6);
+      --bg-card-hover: rgba(30, 30, 40, 0.7);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-bright: rgba(255, 255, 255, 0.16);
+      --text: #e8e8ec;
+      --text-muted: #888892;
+      --text-dim: #4a4a55;
+      --accent: #d4afff;
+      --accent-glow: #b988ff;
+      --accent-deep: #6b4aa8;
+      --katana: #c64a4a;
+      --mint: #6ee7b7;
+      --amber: #fbbf24;
+    }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      line-height: 1.6;
+      font-size: 15px;
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      min-height: 100vh;
+      cursor: default;
+    }
+
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .display { font-family: 'Cinzel', serif; }
+
+    /* MYSTERIOUS BACKGROUND */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at top, rgba(107, 74, 168, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at bottom, rgba(20, 20, 40, 0.4) 0%, transparent 50%),
+        var(--bg);
+      pointer-events: none;
+      z-index: -3;
+    }
+
+    /* Subtle noise texture for atmosphere */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E");
+      opacity: 0.025;
+      pointer-events: none;
+      z-index: -2;
+    }
+
+    /* Mouse-following spotlight */
+    .spotlight {
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(212, 175, 255, 0.08) 0%, transparent 60%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: -1;
+      transform: translate(-50%, -50%);
+      transition: transform 0.15s ease-out;
+      filter: blur(40px);
+    }
+
+    /* Falling particles */
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 50%;
+      opacity: 0;
+      box-shadow: 0 0 6px var(--accent), 0 0 12px var(--accent-glow);
+      animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+      0% { transform: translateY(-10vh) translateX(0); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.6; }
+      100% { transform: translateY(110vh) translateX(40px); opacity: 0; }
+    }
+
+    /* Container */
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 5rem 1.5rem 6rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Reveal animation */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      animation: reveal 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+    .reveal-1 { animation-delay: 0.2s; }
+    .reveal-2 { animation-delay: 0.5s; }
+    .reveal-3 { animation-delay: 0.8s; }
+    .reveal-4 { animation-delay: 1.1s; }
+    .reveal-5 { animation-delay: 1.4s; }
+    .reveal-6 { animation-delay: 1.7s; }
+
+    @keyframes reveal {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* HERO */
+    .hero {
+      margin-bottom: 4rem;
+      position: relative;
+    }
+
+    .greeting {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: var(--accent);
+      margin-bottom: 18px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0.85;
+    }
+
+    .greeting::before {
+      content: "";
+      width: 30px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent));
+    }
+
+    .greeting::after {
+      content: "";
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent-glow);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--accent-glow); }
+      50% { opacity: 0.3; box-shadow: 0 0 4px var(--accent-glow); }
+    }
+
+    .hero h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 88px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      margin-bottom: 12px;
+      background: linear-gradient(180deg, #ffffff 0%, #888892 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 80px rgba(212, 175, 255, 0.3);
+    }
+
+    .hero h1 .typed {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-glow) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 3px;
+      height: 0.85em;
+      background: var(--accent);
+      margin-left: 4px;
+      vertical-align: -8%;
+      animation: blink 1s steps(1) infinite;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    .real-name {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    .real-name .flag { margin-left: 6px; }
+
+    .bio {
+      font-size: 17px;
+      line-height: 1.8;
+      max-width: 580px;
+      color: var(--text);
+      font-weight: 300;
+    }
+
+    .bio .muted { color: var(--text-muted); }
+    .bio .highlight {
+      color: var(--accent);
+      font-weight: 400;
+      text-shadow: 0 0 20px rgba(212, 175, 255, 0.4);
+    }
+
+    /* Sections */
+    section { margin-bottom: 3rem; }
+
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-label::before, .section-label::after {
+      content: "";
+      flex: 0 0 30px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-bright), transparent);
+    }
+
+    .section-label::after { flex: 1; }
+
+    /* GLASS CARDS */
+    .now-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .now-item {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .now-item::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(212, 175, 255, 0.05) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s;
+      pointer-events: none;
+    }
+
+    .now-item:hover {
+      border-color: var(--border-bright);
+      transform: translateY(-3px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(212, 175, 255, 0.1);
+    }
+
+    .now-item:hover::before { opacity: 1; }
+
+    .now-item .label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .now-item .icon {
+      width: 14px; height: 14px;
+      color: var(--accent);
+      filter: drop-shadow(0 0 4px var(--accent-glow));
+    }
+
+    .now-item .value {
+      font-size: 14.5px;
+      color: var(--text);
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    /* Project cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 14px;
+    }
+
+    .card-link { display: block; text-decoration: none; color: inherit; }
+
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: conic-gradient(from 0deg, transparent, rgba(212, 175, 255, 0.1), transparent);
+      opacity: 0;
+      transition: opacity 0.5s;
+      animation: rotate 4s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes rotate {
+      to { transform: rotate(360deg); }
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      background: var(--bg-card);
+      border-radius: 13px;
+      backdrop-filter: blur(20px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .card > * { position: relative; z-index: 1; }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: transparent;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .card:hover::before { opacity: 1; }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .card-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: rgba(212, 175, 255, 0.08);
+      border: 1px solid rgba(212, 175, 255, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+      transition: all 0.4s;
+      box-shadow: 0 0 0 0 rgba(212, 175, 255, 0.3);
+    }
+
+    .card:hover .card-icon {
+      background: rgba(212, 175, 255, 0.15);
+      border-color: rgba(212, 175, 255, 0.4);
+      box-shadow: 0 0 20px 0 rgba(212, 175, 255, 0.2);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.005em;
+    }
+
+    .card-desc {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 14px;
+      font-weight: 300;
+    }
+
+    .card-meta {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      padding: 3px 9px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      letter-spacing: 0.04em;
+    }
+
+    .tag.green {
+      color: var(--mint);
+      border-color: rgba(110, 231, 183, 0.25);
+      background: rgba(110, 231, 183, 0.06);
+    }
+    .tag.amber {
+      color: var(--amber);
+      border-color: rgba(251, 191, 36, 0.25);
+      background: rgba(251, 191, 36, 0.06);
+    }
+
+    /* TRAINING - more mysterious */
+    .training-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 26px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .training-card::before {
+      content: "刀";
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-family: 'Cinzel', serif;
+      font-size: 100px;
+      color: var(--accent);
+      opacity: 0.04;
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    .training-header { margin-bottom: 18px; position: relative; }
+
+    .training-title {
+      font-family: 'Cinzel', serif;
+      font-size: 36px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      line-height: 1.1;
+      margin-bottom: 6px;
+      background: linear-gradient(180deg, var(--text) 0%, var(--text-muted) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .training-title .vs {
+      color: var(--katana);
+      margin: 0 8px;
+      text-shadow: 0 0 20px rgba(198, 74, 74, 0.4);
+      -webkit-text-fill-color: var(--katana);
+    }
+
+    .training-tagline {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-style: italic;
+      letter-spacing: 0.02em;
+    }
+
+    .week-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin: 20px 0 14px;
+    }
+
+    .day {
+      text-align: center;
+      padding: 14px 4px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+
+    .day.train {
+      background: rgba(198, 74, 74, 0.08);
+      border-color: rgba(198, 74, 74, 0.2);
+    }
+
+    .day.train:hover {
+      background: rgba(198, 74, 74, 0.15);
+      border-color: rgba(198, 74, 74, 0.5);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 20px rgba(198, 74, 74, 0.15);
+    }
+
+    .day.rest { opacity: 0.4; }
+
+    .day .day-name {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-dim);
+      font-size: 10px;
+      margin-bottom: 4px;
+      letter-spacing: 0.1em;
+    }
+
+    .day.train .day-name { color: var(--katana); }
+
+    .day .day-focus {
+      color: var(--text);
+      font-size: 11.5px;
+      font-weight: 400;
+      line-height: 1.3;
+    }
+
+    .training-stats {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: var(--text-muted);
+      padding: 14px 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-top: 14px;
+    }
+
+    .divider { color: var(--text-dim); }
+
+    .training-toggle {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 9px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      transition: all 0.3s;
+      margin-top: 14px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .training-toggle:hover {
+      background: rgba(212, 175, 255, 0.08);
+      border-color: rgba(212, 175, 255, 0.3);
+      box-shadow: 0 0 20px rgba(212, 175, 255, 0.15);
+    }
+
+    .training-detail {
+      display: none;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .training-detail.open {
+      display: block;
+      animation: reveal 0.6s ease-out;
+    }
+
+    .workout-day { margin-bottom: 20px; }
+
+    .workout-day h4 {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--katana);
+      margin-bottom: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.1em;
+    }
+
+    .workout-day ul { list-style: none; padding-left: 0; }
+
+    .workout-day li {
+      font-size: 13px;
+      color: var(--text-muted);
+      padding: 4px 0;
+      padding-left: 18px;
+      position: relative;
+      font-weight: 300;
+    }
+
+    .workout-day li::before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: var(--katana);
+      font-size: 10px;
+      top: 6px;
+    }
+
+    /* Contact */
+    .contact-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .contact-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 12px 18px;
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 400;
+      transition: all 0.3s;
+    }
+
+    .contact-link:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(212, 175, 255, 0.4);
+      color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3), 0 0 20px rgba(212, 175, 255, 0.1);
+    }
+
+    .contact-link svg {
+      width: 15px;
+      height: 15px;
+      opacity: 0.85;
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      text-transform: uppercase;
+    }
+
+    footer .heart { color: var(--katana); }
+
+    @media (max-width: 600px) {
+      .container { padding: 3rem 1.25rem 4rem; }
+      .hero h1 { font-size: 60px; }
+      .bio { font-size: 15.5px; }
+      .now-grid { grid-template-columns: 1fr; }
+      .training-title { font-size: 28px; }
+      .week-grid { gap: 4px; }
+      .day { padding: 11px 2px; }
+      .day .day-focus { font-size: 10.5px; }
+      .training-card::before { font-size: 80px; right: 10px; }
+      .spotlight { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal, .greeting::after, .particle, .card::before {
+        animation: none;
+      }
+      .reveal { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mouse spotlight -->
+  <div class="spotlight" id="spotlight"></div>
+
+  <!-- Falling particles -->
+  <div class="particles" id="particles"></div>
+
+  <div class="container">
+
+    <div class="hero reveal reveal-1">
+      <div class="greeting">whoami</div>
+      <h1>I'M <span class="typed" id="typed-name"></span><span class="cursor" id="cursor"></span></h1>
+      <div class="real-name">Bashanta Bikash Chakma <span class="flag">🇧🇩</span></div>
+      <p class="bio">
+        Final-year B.Tech CSE at <span class="highlight">Guru Nanak Dev University</span>. From Bangladesh, currently in India. <span class="muted">I build AI products — LLM agents, RAG systems, and tools for South Asian small businesses. Right now, I'm building an AI auto-reply agent for Bangladeshi F-commerce sellers.</span>
+      </p>
+    </div>
+
+    <section class="reveal reveal-2">
+      <div class="section-label">Now</div>
+      <div class="now-grid">
+        <div class="now-item">
+          <div class="label">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            Goal
+          </div>
+          <div class="value">Ship a real AI product. Land paying customers. 5–6 months.</div>
+        </div>
+        <div class="now-item">
+          <div class="label">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
+            Building
+          </div>
+          <div class="value">AI auto-reply agent for BD F-commerce sellers.</div>
+        </div>
+        <div class="now-item">
+          <div class="label">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg>
+            Stack
+          </div>
+          <div class="value">Python · Claude · LangChain · RAG · Next.js</div>
+        </div>
+        <div class="now-item">
+          <div class="label">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            Priorities
+          </div>
+          <div class="value">Sleep · Diet · Workout · Build</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="reveal reveal-3">
+      <div class="section-label">Projects</div>
+      <div class="card-grid">
+
+        <a href="https://github.com/ibo-agentic/DevAgent" class="card-link" target="_blank" rel="noopener">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">⚡</div>
+              <div class="card-title">DevAgent</div>
+            </div>
+            <div class="card-desc">Autonomous AI coding agent that reads, writes, and pushes code to GitHub.</div>
+            <div class="card-meta">
+              <span class="tag">Python</span>
+              <span class="tag">Claude</span>
+              <span class="tag green">Built</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="https://github.com/ibo-agentic/ai-startup-generator" class="card-link" target="_blank" rel="noopener">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">💡</div>
+              <div class="card-title">AI Startup Generator</div>
+            </div>
+            <div class="card-desc">Type an idea, get instant validation — market analysis, risks, and recommendations.</div>
+            <div class="card-meta">
+              <span class="tag">Python</span>
+              <span class="tag">LLM</span>
+              <span class="tag green">Built</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="https://github.com/ibo-agentic/ai-resume-reviewer-and-improvement" class="card-link" target="_blank" rel="noopener">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">📄</div>
+              <div class="card-title">AI Resume Reviewer</div>
+            </div>
+            <div class="card-desc">LLM-powered resume reviewer that scores resumes and suggests improvements.</div>
+            <div class="card-meta">
+              <span class="tag">Python</span>
+              <span class="tag">LLM</span>
+              <span class="tag green">Built</span>
+            </div>
+          </div>
+        </a>
+
+        <a href="https://github.com/ibo-agentic/tech-ed" class="card-link" target="_blank" rel="noopener">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon">🎓</div>
+              <div class="card-title">tech-ed</div>
+            </div>
+            <div class="card-desc">RAG-based AI tutor for BD students using NCTB textbooks. Paused — research showed LLM economics didn't fit the BD student market.</div>
+            <div class="card-meta">
+              <span class="tag">Python</span>
+              <span class="tag">RAG</span>
+              <span class="tag amber">Paused</span>
+            </div>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <section class="reveal reveal-4">
+      <div class="section-label">Training & Recovery</div>
+      <div class="training-card">
+        <div class="training-header">
+          <div class="training-title">TOJI <span class="vs">×</span> BAKI</div>
+          <div class="training-tagline">Upper width. Lower power. Structured growth.</div>
+        </div>
+
+        <div class="week-grid">
+          <div class="day train"><div class="day-name">MON</div><div class="day-focus">Push</div></div>
+          <div class="day train"><div class="day-name">TUE</div><div class="day-focus">Quad</div></div>
+          <div class="day rest"><div class="day-name">WED</div><div class="day-focus">Rest</div></div>
+          <div class="day train"><div class="day-name">THU</div><div class="day-focus">Pull</div></div>
+          <div class="day train"><div class="day-name">FRI</div><div class="day-focus">Shldr</div></div>
+          <div class="day train"><div class="day-name">SAT</div><div class="day-focus">Post.</div></div>
+          <div class="day rest"><div class="day-name">SUN</div><div class="day-focus">Rest</div></div>
+        </div>
+
+        <div class="training-stats">
+          <span>🌱 Vegan</span>
+          <span class="divider">·</span>
+          <span>5 days lifting</span>
+          <span class="divider">·</span>
+          <span>2 days rest</span>
+          <span class="divider">·</span>
+          <span>7–9h sleep</span>
+          <span class="divider">·</span>
+          <span>Lean bulk</span>
+        </div>
+
+        <button class="training-toggle" onclick="toggleTraining()">View Full Program</button>
+
+        <div class="training-detail" id="training-detail">
+
+          <div class="workout-day">
+            <h4>MON — UPPER PUSH (Toji width)</h4>
+            <ul>
+              <li>Incline Barbell Press — 4×6–8</li>
+              <li>Flat Dumbbell Press — 3×8–10</li>
+              <li>Weighted Dips — 3×8–10</li>
+              <li>DB Lateral Raises — 4×12–15</li>
+              <li>Machine Lateral Raises — 3×15–20</li>
+              <li>Overhead Tricep Extension — 3×10–12</li>
+              <li>Cable Fly (slow stretch) — 2×12–15</li>
+            </ul>
+          </div>
+
+          <div class="workout-day">
+            <h4>TUE — LOWER (Quad Power)</h4>
+            <ul>
+              <li>Barbell Back Squat — 4×6–8</li>
+              <li>Leg Press — 3×10–12</li>
+              <li>Walking Lunges — 3×10/leg</li>
+              <li>Leg Extensions (pause top) — 3×12–15</li>
+              <li>Romanian Deadlift — 3×8–10</li>
+              <li>Standing Calf Raises — 4×12–20</li>
+            </ul>
+          </div>
+
+          <div class="workout-day">
+            <h4>THU — UPPER PULL (Back & V-taper)</h4>
+            <ul>
+              <li>Weighted Pull-Ups — 4×6–8</li>
+              <li>Barbell Rows — 4×6–8</li>
+              <li>Lat Pulldown — 3×10–12</li>
+              <li>Chest-Supported Row — 3×8–12</li>
+              <li>Face Pulls — 3×15</li>
+              <li>Barbell Curl — 3×8–10</li>
+              <li>Incline DB Curl — 2×10–12</li>
+            </ul>
+          </div>
+
+          <div class="workout-day">
+            <h4>FRI — SHOULDERS & ARMS</h4>
+            <ul>
+              <li>Overhead Barbell Press — 4×6–8</li>
+              <li>DB Lateral Raises — 4×12–15</li>
+              <li>Rear Delt Fly — 3×15</li>
+              <li>Close Grip Bench — 3×6–8</li>
+              <li>Skull Crushers — 3×10–12</li>
+              <li>EZ Bar Curl — 3×8–10</li>
+              <li>Hammer Curl — 3×12</li>
+            </ul>
+          </div>
+
+          <div class="workout-day">
+            <h4>SAT — LOWER (Posterior Chain / Baki)</h4>
+            <ul>
+              <li>Romanian Deadlift (heavy) — 4×6–8</li>
+              <li>Hip Thrust — 3×8–10</li>
+              <li>Lying Leg Curl — 3×12–15</li>
+              <li>Bulgarian Split Squat — 3×8–10/leg</li>
+              <li>Seated Calf Raises — 4×15–20</li>
+              <li>Hanging Leg Raises — 3×12–15</li>
+            </ul>
+          </div>
+
+          <div style="margin-top: 16px; padding: 14px 18px; background: rgba(198, 74, 74, 0.05); border: 1px solid rgba(198, 74, 74, 0.15); border-radius: 8px; font-size: 12.5px; color: var(--text-muted); line-height: 1.7; font-weight: 300;">
+            <strong style="color: var(--katana); font-weight: 500;">Lean bulk protocol:</strong> 0.25–0.4 kg/week · progressive overload · deload week if strength drops 2+ weeks. Build width like Toji. Build legs like Baki.
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="reveal reveal-5">
+      <div class="section-label">Contact</div>
+      <div class="contact-row">
+        <a href="mailto:hello@ibohanma.com" class="contact-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>
+          hello@ibohanma.com
+        </a>
+        <a href="https://github.com/ibo-agentic" class="contact-link" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.44 9.8 8.21 11.39.6.11.82-.26.82-.58 0-.29-.01-1.04-.02-2.05-3.34.73-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.09-.74.08-.73.08-.73 1.21.09 1.84 1.24 1.84 1.24 1.07 1.84 2.81 1.31 3.5 1 .11-.78.42-1.31.76-1.61-2.66-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.3-1.23 3.3-1.23.66 1.66.25 2.88.12 3.18.77.84 1.24 1.91 1.24 3.22 0 4.61-2.81 5.62-5.49 5.92.43.37.81 1.1.81 2.22 0 1.6-.01 2.89-.01 3.29 0 .32.21.69.83.58A12 12 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+        <a href="https://www.linkedin.com/in/bashant-bikash-chakma/" class="contact-link" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.761 0 5-2.239 5-5v-14c0-2.761-2.239-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+          LinkedIn
+        </a>
+      </div>
+    </section>
+
+    <footer class="reveal reveal-6">
+      <span>ibohanma.com</span>
+      <span>built with <span class="heart">♥</span> · shipped from india</span>
+    </footer>
+
+  </div>
+
+  <script>
+    // Mouse-following spotlight
+    const spotlight = document.getElementById('spotlight');
+    document.addEventListener('mousemove', (e) => {
+      spotlight.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
+    });
+
+    // Falling particles
+    const particlesContainer = document.getElementById('particles');
+    function createParticle() {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      const size = Math.random() * 2 + 1;
+      particle.style.width = size + 'px';
+      particle.style.height = size + 'px';
+      particle.style.left = Math.random() * 100 + 'vw';
+      const duration = Math.random() * 8 + 8;
+      particle.style.animationDuration = duration + 's';
+      particle.style.opacity = Math.random() * 0.5 + 0.3;
+      particlesContainer.appendChild(particle);
+      setTimeout(() => particle.remove(), duration * 1000);
+    }
+    setInterval(createParticle, 400);
+    for (let i = 0; i < 15; i++) {
+      setTimeout(createParticle, i * 200);
+    }
+
+    // Typing animation
+    const typedName = document.getElementById('typed-name');
+    const cursor = document.getElementById('cursor');
+    const nameToType = 'IBO.';
+    let charIndex = 0;
+    function typeChar() {
+      if (charIndex < nameToType.length) {
+        typedName.textContent += nameToType.charAt(charIndex);
+        charIndex++;
+        setTimeout(typeChar, 180);
+      }
+    }
+    setTimeout(typeChar, 800);
+
+    // Training toggle
+    function toggleTraining() {
+      const detail = document.getElementById('training-detail');
+      const button = document.querySelector('.training-toggle');
+      detail.classList.toggle('open');
+      button.textContent = detail.classList.contains('open')
+        ? 'Hide Full Program'
+        : 'View Full Program';
+    }
+  </script>
+
+</body>
+</html>
